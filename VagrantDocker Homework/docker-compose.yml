@@ -1,0 +1,26 @@
+# docker-compose.yml
+version: '3'
+
+services:
+  web:
+    build: ./WEB
+    image: php:apache
+    ports:
+     - "5000:80"
+    networks:
+     - com-network
+    depends_on:
+     - db
+  
+
+  db:
+   build: ./DB
+   ports:
+    - "5001:80"
+   networks:
+    - com-network
+   environment:
+    MYSQL_ROOT_PASSWORD: root
+
+networks:
+    com-network:

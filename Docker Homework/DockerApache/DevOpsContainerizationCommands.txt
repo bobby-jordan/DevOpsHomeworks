@@ -1,0 +1,3 @@
+Build: sudo docker image build -t my-container .
+Will run temporarily: sudo docker container run -t my-container
+To run as a daemon in the background (IP won't be shown): sudo docker container run -d -it my-container

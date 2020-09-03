@@ -1,0 +1,8 @@
+---
+  - hosts: all
+    gather_facts: yes
+    become: true
+    vars:
+      ansible_python_interpreter: auto
+    roles:
+      - docker-nginx

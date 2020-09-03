@@ -1,0 +1,27 @@
+---
+# Setup Nginx in Docker Container
+
+  - name: Build Docker images from Dockerfiles
+    docker_image:
+      name: "{{ item.name }}"
+      tag: "{{ item.tag }}"
+      path: "/vagrant/Provisioning/{{ item.directory }}"
+      state: build
+    with_items:
+      - { name: www, tag: "nginx", directory: www }
+    notify: restart docker
+
+
+  - name: Run nginx container
+    docker_container:
+      image: '{{ docker_image }}'
+      name: '{{ docker_container_name }}'
+      state: started
+      exposed_ports: '{{ nginx_exposed_ports }}'
+      ports: '{{ nginx_published_ports }}'
+      command: sleep infinity
+      restart_policy: 'always'
+      log_driver: 'syslog'
+      log_options:
+        tag: "{{ nginx_container_name }}"
+    notify: restart docker

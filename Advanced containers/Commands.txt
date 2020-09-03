@@ -1,0 +1,46 @@
+curl -L https://github.com/docker/compose/releases/download/1.25.5/docker-compose-`uname -s`-`uname -m` > /tmp/docker-compose && chmod +x /tmp/docker-compose && sudo cp /tmp/docker-compose /usr/local/bin/docker-compose
+
+scp -r M3-2b/ docker@192.168.99.100:/home/docker/
+
+cd M3-2b
+docker-compose build
+docker-compose up -d
+
+docker-compose 
+
+docker-machine stop
+docker-machine create -d virtualbox docker-machine-1
+docker-machine create -d virtualbox docker-machine-2
+docker-machine create -d virtualbox docker-machine-3
+docker-machine env docker-machine-1
+docker-machine env docker-machine-2
+docker-machine env docker-machine-3
+
+docker-machine ls
+
+Either this (manually):
+docker-machine ssh docker-machine-1
+docker swarm init --advertise-addr 192.168.99.104
+exit
+
+docker-machine ssh docker-machine-2
+docker swarm join --token SWMTKN-1-2gtv69nhgl6y6u2iqp4vyrn45dcj2pnt0edmqgs2ukwk60hhi7-adafs37c74vxqvfvedexhrdwa --advertise-addr 192.168.99.105 192.168.99.104
+exit
+
+docker-machine ssh docker-machine-3
+docker swarm join --token SWMTKN-1-2gtv69nhgl6y6u2iqp4vyrn45dcj2pnt0edmqgs2ukwk60hhi7-adafs37c74vxqvfvedexhrdwa --advertise-addr 192.168.99.106 192.168.99.104
+exit
+Or this (Automatically):
+sudo vagrant up (creates the cluster)
+
+scp -r M3-3/ docker@192.168.99.104:/home/docker
+scp -r M3-3/ docker@192.168.99.105:/home/docker
+scp -r M3-3/ docker@192.168.99.106:/home/docker
+
+docker-machine ssh docker-machine-1
+cd M3-3
+
+vi docker-compose.yml
+
+docker stack deploy -c docker-compose.yml docker-helper
+docker stack services docker-helper

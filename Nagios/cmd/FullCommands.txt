@@ -1,0 +1,261 @@
+vagrant up
+///////////////////////////////NODE 1///////////////////////////////////
+sudo mkdir /etc/nagios/objects/files
+sudo vi /etc/nagios/objects/files/host-nodeone.cfg
+
+define host {
+use linux-server
+host_name nodeone
+alias Slave Host Node 1
+address 192.168.99.101
+icon_image linux40.png
+statusmap_image linux40.png
+}
+
+sudo vi /etc/nagios/objects/files/template-service-remote.cfg
+
+define service {
+name remote-service
+use generic-service
+max_check_attempts 5
+normal_check_interval 2
+retry_check_interval 1
+register 0
+}
+
+sudo vi /etc/nagios/objects/files/service-nodeone-http.cfg
+
+define service {
+use remote-service
+host_name nodeone
+service_description HTTP
+check_command check_http!$HOSTADDRESS$
+notifications_enabled 0
+}
+
+sudo vi /etc/nagios/nagios.cfg
+cfg_dir=/etc/nagios/objects/files
+
+sudo nagios -v /etc/nagios/nagios.cfg
+sudo systemctl restart nagios
+sudo vi /etc/nagios/objects/localhost.cfg
+
+sudo vi /etc/nagios/objects/files/group-host-dob.cfg
+
+define hostgroup {
+hostgroup_name dob-hosts
+alias DOB Demo Servers
+members nodeone, nodetwo
+}
+
+sudo vi /etc/nagios/objects/files/group-service-http.cfg
+
+define servicegroup {
+servicegroup_name group-service-http
+alias HTTP Services
+members localhost, HTTP, node1.dob.lab, HTTP
+}
+
+sudo vi /etc/nagios/objects/files/group-service-infra.cfg
+
+define servicegroup {
+servicegroup_name group-service-infra
+alias InfrastructureServices
+members localhost, Current Load
+}
+
+sudo nagios -v /etc/nagios/nagios.cfg
+sudo systemctl restart nagios
+
+///////////////////////////////NODE 2///////////////////////////////////
+vagrant ssh nodetwo
+sudo dnf install -y epel-release
+sudo dnf config-manager --set-enabled PowerTools
+sudo dnf install -y nrpe nrpe-selinux nagios-plugins-nrpe nagios-plugins-all nagios nagios-common nagios-selinux
+sudo vi /etc/nagios/nrpe.cfg
+sudo firewall-cmd --add-port=5666/tcp --permanent
+sudo firewall-cmd --reload
+sudo systemctl enable --now nrpe
+sudo /usr/lib64/nagios/plugins/check_nrpe -H localhost
+sudo /usr/lib64/nagios/plugins/check_nrpe -H 192.168.99.102
+exit
+
+///////////////////////////////master///////////////////////////////////
+vagrant ssh master
+sudo dnf install -y epel-release
+sudo dnf config-manager --set-enabled PowerTools
+sudo dnf install -y nrpe nrpe-selinux nagios-plugins-nrpe nagios-plugins-all nagios nagios-common nagios-selinux
+
+sudo vi /etc/nagios/objects/commands.cfg
+
+define command {
+command_name check-nrpe
+command_line $USER1$/check_nrpe -H $HOSTADDRESS$ -c $ARG1$
+}
+
+
+sudo vi /etc/nagios/objects/files/host-nodeone.cfg
+
+define host {
+use linux-server
+host_name nodetwo
+alias Slave Host Node 2
+address 192.168.99.102
+icon_image linux40.png
+statusmap_image linux40.png
+}
+
+sudo vi /etc/nagios/objects/files/service-nodetwo-cpu.cfg
+
+define service {
+use remote-service
+host_name nodetwo
+service_description CPU Load
+check_command check-nrpe!check_load
+}
+
+sudo vi /etc/nagios/objects/localhost.cfg
+
+define hostgroup {
+hostgroup_name linux-servers
+alias Linux Servers
+members localhost, nodeone, nodetwo
+}
+
+sudo vi /etc/nagios/objects/files/template-service-remote.cfg
+
+define service {
+name remote-service
+use generic-service
+max_check_attempts 5
+normal_check_interval 2
+retry_check_interval 1
+register 0
+}
+
+sudo vi /etc/nagios/objects/files/group-host-dob.cfg
+
+define hostgroup {
+hostgroup_name dob-hosts
+alias DOB Demo Servers
+members nodeone, nodetwo
+}
+
+sudo vi /etc/nagios/objects/files/group-service-infra.cfg
+
+define servicegroup {
+servicegroup_name group-service-infra
+alias Infrastructure Services
+members localhost, Current Load, nodetwo, CPU Load
+}
+
+sudo nagios -v /etc/nagios/nagios.cfg
+sudo systemctl restart nagios
+
+sudo systemctl enable --now httpd
+sudo systemctl enable --now nagios
+sudo firewall-cmd --add-service={http,https} --permanent
+sudo firewall-cmd --reload
+sudo htpasswd /etc/nagios/passwd nagiosadmin
+sudo dnf install -y nagios-plugins-* --exclude nagios-plugins-all,nagios-plugins-ssl_validity
+sudo systemctl restart nagios
+sudo dnf install -y tree
+echo '<h1>This is a demo site</h1>' | sudo tee /var/www/html/index.html
+echo '<h1>Remote host: Demo site.</h1>' | sudo tee /var/www/html/index.html
+echo '<h1>Remote host: Another Demo site.</h1>' | sudo tee /var/www/html/index.html
+
+
+
+/////////////////////////////////NODE TWO//////////////////////////////////////////////
+vagrant ssh nodetwo
+sudo dnf install -y mariadb mariadb-server
+sudo systemctl enable --now mariadb
+mysql -u root --password=''
+create user nagios@192.168.99.100 identified by 'Password1';
+quit
+sudo firewall-cmd --add-port=3306/tcp --permanent
+sudo firewall-cmd --reload
+
+vagrant ssh master
+sudo /usr/lib64/nagios/plugins/check_mysql -H 192.168.99.102 -u nagios -p Password1
+sudo vi /etc/nagios/objects/files/command-mysql.cfg
+
+define command {
+command_name check-mysql
+command_line $USER1$/check_mysql -H '$HOSTADDRESS$'
+}
+
+define command {
+command_name check-mysql-cmdlinecred
+command_line $USER1$/check_mysql -H '$HOSTADDRESS$' -u '$ARG1$' -p '$ARG2$'
+}
+
+define command {
+command_name check-mysql-database
+command_line $USER1$/check_mysql -d '$ARG3$' -H '$HOSTADDRESS$' -u '$ARG1$' -p '$ARG2$'
+}
+
+define command {
+command_name check-mysql-query
+command_line $USER1$/check_mysql_query -q '$ARG4$' -d '$ARG3$' -H '$HOSTADDRESS$' -u '$ARG1$' -p '$ARG2$'
+}
+
+sudo vi /etc/nagios/objects/files/service-nodetwo-mysql.cfg
+
+define service {
+use remote-service
+host_name nodetwo
+service_description MYSQL
+check_command check-mysql-cmdlinecred!nagios!Password1
+notification_interval 2
+}
+
+sudo systemctl restart nagios
+
+exit
+
+chmod +x docker_setup.sh
+sudo ./docker_setup.sh
+
+
+sudo scp -P 2201 docker_setup.sh check_docker_container.sh vagrant@localhost:.
+
+vagrant ssh nodetwo
+chmod +x docker_setup.sh
+sudo ./docker_setup.sh
+sudo visudo
+sudo reboot
+vagrant ssh nodetwo
+docker container run -d --name dob-container alpine sleep 1d
+chmod +x check_docker_container.sh 
+sudo mv ./check_docker_container.sh /usr/lib64/nagios/plugins
+
+sudo vi /etc/nagios/nrpe.cfg
+command[check-docker-container]=/usr/lib64/nagios/plugins/check_docker_container.sh $ARG1$
+sudo systemctl restart nrpe
+sudo vi /etc/nagios/objects/commands.cfg
+
+define command {
+command_name check-nrpe-arg
+command_line $USER1$/check_nrpe $HOSTADDRESS$ $ARG1$ -a $ARG2$
+}
+
+
+sudo vi /etc/nagios/objects/dob-files/service-nodetwo-docker.cfg
+
+define service {
+user remote-service
+host_name nodetwo
+service_description Container Running
+check_command check-nrpe-arg!check-docker-container!dob-con
+}
+
+sudo nagios -v /etc/nagios/nagios.cfg
+sudo systemctl restart nagios
+
+
+echo 'cfg_dir=/etc/nagios/objects/files' >> /etc/nagios/nagios.cfg
+
+vagrant up
+
+

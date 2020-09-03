@@ -1,0 +1,15 @@
+---
+- hosts: databases
+  become: true
+  gather_facts: no
+  tasks:
+    - name: Import DB
+      shell: mysql bulgaria < db/db_setup.sql
+
+- hosts: webservers
+  become: true
+  gather_facts: no
+  tasks:
+    - name: Copy new index.html
+      copy: src=web/index.php,web/bulgaria-map.png dest=/var/www/html/
+    

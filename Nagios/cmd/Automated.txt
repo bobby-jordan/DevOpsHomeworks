@@ -1,0 +1,14 @@
+chmod +x ./run.sh
+./run.sh
+
+vagrant ssh master
+chmod +x master.sh
+./master.sh
+
+vagrant ssh nodeone
+chmod +x nodeone.sh
+./nodeone.sh
+
+vagrant ssh nodetwo
+chmod +x nodetwo.sh
+./nodetwo.sh

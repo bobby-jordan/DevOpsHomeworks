@@ -1,0 +1,22 @@
+sudo useradd -d /var/lib/jenkins jenkins
+sudo passwd jenkins
+sudo useradd -d /var/lib/jenkins peteryordanov
+sudo passwd *********
+
+cd /var/lib/jenkins/.ssh
+su - jenkins
+sudo ssh-keygen -t rsa -C "Jenkins agent key" -f /var/lib/jenkins/.ssh/id_rsa
+cat /var/lib/jenkins/key.pub >> ~/.ssh/authorized_keys
+cat .ssh/id_rsa.pub > authorized_keys
+sudo cp authorized_keys .ssh
+
+sudo more id_rsa
+sudo chown -Rh jenkins:jenkins /var/lib/jenkins/.ssh
+sudo chmod 600 id_rsa
+sudo chmod 644 id_rsa.pub 
+sudo chmod 644 known_hosts 
+sudo chmod 600 authorized_keys 
+
+sudo usermod -aG docker jenkins
+sudo usermod -aG docker peteryordanov
+sudo service jenkins restart

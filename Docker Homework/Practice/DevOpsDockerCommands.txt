@@ -1,0 +1,93 @@
+Downloading/Installing/Setting up (Host, Ubuntu):
+	sudo apt install -y docker docker.io
+	
+	vagrant init --minimal shekeriev/centos-8-minimal
+	vagrant up
+	vagrant ssh
+
+	sudo dnf remove docker docker-client docker-client-latest docker-common docker-latest docker-latest-logrotate docker-logrotate docker-selinux docker-engine-selinux docker-engine
+	sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+	sudo dnf install -y https://download.docker.com/linux/centos/7/x86_64/stable/Packages/containerd.io-1.2.13-3.1.el7.x86_64.rpm
+	sudo dnf install -y docker-ce docker-ce-cli
+	sudo systemctl start docker
+	systemctl status docker
+	sudo docker version
+	sudo docker system info
+	sudo docker container run hello-world
+	sudo docker container run shekeriev/welcome-dob:2020
+	sudo usermod -aG docker vagrant
+	sudo docker container run hello-world
+	sudo systemctl enable docker
+	sudo firewall-cmd --add-interface docker0 --zone trusted --permanent
+	sudo firewall-cmd --reload
+	
+	mkdir Vagrant-practice
+	cd Vagrant-practice
+	# new vagrant file
+	# dobdocker shell
+	vagrant up
+	vagrant ssh
+	docker --version
+	docker search ubuntu
+	docker image pull ubuntu:latest
+	docker image pull ubuntu:18.04
+	docker image ls
+	docker container run -t ubuntu:18.04
+	
+	Inside ubuntu container:
+	ls
+	ps aux
+	
+	Vagrant VM:
+	docker container ls
+	docker container create -it --name ubuntu-20 ubuntu /bin/bash
+	docker container start -ai ubuntu-20
+	docker container stop $(docker container ls -q)
+	docker container prune
+	docker container run -it --name my-alpine alpine
+	echo 'test' > readme.txt
+	cat readme.txt
+	ls
+	exit
+	
+	docker container export -o my-alpine.tar my-alpine
+	docker image import my-alpine.tar --change "CMD /bin/sh" my-new-alpine
+	docker container run -it my-new-alpine
+	ls
+	cat readme.txt
+	exit
+	docker image pull busybox
+	docker image save -o busybox.tar busybox
+	docker image rm busybox
+	docker image load -i busybox.tar
+	docker container run -it busybox
+	exit
+	docker container run -it --name my-ubuntu ubuntu
+	docker container commit --author "SoftUni Student" my-ubuntu new-ubuntu
+	docker image ls new-ubuntu
+	docker container run -it --rm new-ubuntu
+	exit
+	docker image build -t alp-htop - << EOF
+	htop
+	exit
+	mkdir nginx-1 && cd nginx-1
+	vi Dockerfile
+	docker image build -t nginx-1 .
+	docker container run -d -p 8080:80 --name web-1 nginx-1
+	docker container stop web-1
+	mkdir nginx-2 && cd nginx-2
+	vi Dockerfile
+	docker image build -t nginx-2 .
+	docker container run -d -p 8080:80 --name web-2 nginx-2
+	docker image history nginx-1
+	docker image history nginx-2
+	cd ..
+	mkdir entry-cmd && cd entry-cmd
+	vi Dockerfile
+	docker image build -t pinger .
+	docker container run --name p1 pinger
+	docker container run --name p2 pinger tuionui.com
+	docker container stop $(docker container ls -q)
+	docker container prune
+	docker rmi -f $(docker images -a -q)
+

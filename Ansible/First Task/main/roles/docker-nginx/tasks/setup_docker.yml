@@ -1,0 +1,65 @@
+---
+# tasks file for docker-nginx
+# Installtion of Docker
+
+  - name: Install docker dependencies
+    apt:
+      name: "{{ docker_package_dependencies + docker_pip_dependencies }}"
+      update_cache: yes
+    tags:
+      - docker
+
+  - name: PiP install certain python modules for docker
+    pip:
+      name: "{{ pip_dependencies }}"
+      executable: pip3
+      state: present
+
+  - name: Add Docker's GPG key
+    apt_key:
+      id: "{{ docker_apt_key_id }}"
+      url: "{{ docker_apt_key_server }}"
+      state: present
+    register: add_repository_key
+    ignore_errors: "{{ docker_apt_ignore_key_error }}"
+    tags:
+      - docker
+
+  - name: Ensure curl is present (on older systems without SNI).
+    package: name=curl state=present
+    when: add_repository_key is failed
+
+  - name: Add Docker apt key (alternative for older systems without SNI).
+    shell: "curl -sSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -"
+    args:
+      warn: false
+    when: add_repository_key is failed
+
+  - name: Add Docker repository.
+    apt_repository:
+      repo: "{{ docker_apt_repository }}"
+      state: present
+      update_cache: true
+    tags:
+      - docker
+
+  - name: Install Docker.
+    apt:
+      name: "{{ docker_package }}"
+      state: "{{ docker_package_state }}"
+      force: yes
+    notify: restart docker
+    tags:
+      - docker
+
+  - name: Check Docker service is started and enabled at boot.
+    service:
+      name: docker
+      state: "{{ docker_service_state }}"
+      enabled: "{{ docker_service_enabled }}"
+    tags:
+      - docker
+
+  - name: Is Docker Installed
+    package: name=docker state=present
+

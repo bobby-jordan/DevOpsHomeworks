@@ -1,0 +1,55 @@
+---
+# defaults file for docker-nginx
+
+docker_edition: "ce"
+docker__channel: "stable"
+docker_version: "latest"
+docker_package: "docker-{{ docker_edition }}"
+docker_package_state: "present"
+
+docker_apt_ignore_key_error: true
+docker_apt_key_id: "9DC858229FC7DD38854AE2D88D81803C0EBFCD88"
+docker_apt_key_server: "https://download.docker.com/linux/{{ ansible_distribution|lower }}/gpg"
+docker_apt_repository: >
+  deb [arch=amd64]
+  https://download.docker.com/linux/{{ ansible_distribution|lower }}
+  {{ ansible_distribution_release }} {{ docker__channel }}
+
+
+docker_package_dependencies:
+  - "apt-transport-https"
+  - "ca-certificates"
+  - "curl"
+  - "gnupg2"
+  - "python-pip"
+  - "software-properties-common"
+
+pip_dependencies:
+  - setuptools
+  - docker
+
+
+docker_pip_dependencies:
+  - "python-setuptools"
+  - "python3-pip"
+
+
+# Service options.
+docker_service_state: started
+docker_service_enabled: true
+docker_restart_handler_state: restarted
+
+docker_image: "www:nginx"
+docker_container_name: "www"
+
+nginx_base_directory: '/tmp/nginx'
+nginx_container_name: 'nginx'
+nginx_exposed_ports:
+  - '80'
+nginx_published_ports:
+  - '80:80'
+nginx_reverse_proxy_config_directory: "{{ nginx_base_directory }}/conf.d"
+nginx_exposed_volumes:
+  - "{{ nginx_base_directory }}/nginx.conf:/etc/nginx/nginx.conf:ro"
+  - "{{ nginx_base_directory }}/defaults:/usr/share/nginx/html:ro"
+  - "{{ nginx_reverse_proxy_config_directory }}:/etc/nginx/conf.d:ro"

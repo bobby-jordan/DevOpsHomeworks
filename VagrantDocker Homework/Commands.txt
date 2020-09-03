@@ -1,0 +1,47 @@
+curl -L https://download.docker.com/linux/static/stable/x86_64/docker-19.03.9.tgz \
+-o /tmp/docker-19.03.9.tgz && \
+tar xzvf /tmp/docker-19.03.9.tgz && \
+sudo mv docker/docker /usr/local/bin/docker && \
+rm -rf docker/ && \
+rm /tmp/docker-19.03.9.tgz
+
+
+
+curl -L https://github.com/docker/machine/releases/download/v0.16.2/docker-machine-`uname -s`-`uname -m` >/tmp/docker-machine && \
+chmod +x /tmp/docker-machine && \
+sudo cp /tmp/docker-machine /usr/local/bin/docker-machine
+
+
+
+docker-machine create --driver virtualbox default
+
+
+docker-machine ls
+
+
+docker-machine env default
+
+
+eval $(docker-machine env)
+
+
+docker container run shekeriev/welcome-dob:2020
+
+
+eval $(docker-machine env -u)
+docker-machine env -u
+
+
+docker-machine ssh default docker image ls
+
+
+
+docker-machine ssh default
+
+
+curl -L https://github.com/docker/compose/releases/download/1.25.5/docker-compose-`uname -s`-`uname -m` > /tmp/docker-compose && chmod +x /tmp/docker-compose && sudo cp /tmp/docker-compose /usr/local/bin/docker-compose
+
+
+docker-machine start default
+sudo docker-compose up
+

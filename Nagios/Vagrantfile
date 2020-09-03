@@ -1,0 +1,30 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+
+  config.ssh.insert_key = false
+
+  config.vm.define "master" do |master|
+    master.vm.box="shekeriev/centos-8-minimal"
+    master.vm.hostname = "master"
+    master.vm.network "private_network", ip: "192.168.99.100"
+    master.vm.network "forwarded_port", guest: 80, host: 8000
+    master.vm.provision "shell", path: "add_hosts.sh"
+  end
+  
+  config.vm.define "nodeone" do |nodeone|
+    nodeone.vm.box="shekeriev/centos-8-minimal"
+    nodeone.vm.hostname = "nodeone"
+    nodeone.vm.network "private_network", ip: "192.168.99.101"
+    nodeone.vm.network "forwarded_port", guest: 80, host: 8001
+    nodeone.vm.provision "shell", path: "add_hosts.sh"
+  end
+  
+  config.vm.define "nodetwo" do |nodetwo|
+    nodetwo.vm.box="shekeriev/centos-8-minimal"
+    nodetwo.vm.hostname = "nodetwo"
+    nodetwo.vm.network "private_network", ip: "192.168.99.102"
+    nodetwo.vm.provision "shell", path: "add_hosts.sh"
+  end
+end

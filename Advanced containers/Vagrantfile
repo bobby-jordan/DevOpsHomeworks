@@ -1,0 +1,33 @@
+Vagrant.configure("2") do |config|
+  config.vm.box = "hashicorp/boot2docker"
+
+  config.vm.provision "shell", path: "wait-for-docker.sh"
+
+  config.vm.define "docker-machine-1", primary: true do |manager1|
+    manager1.vm.network "private_network", ip: "192.168.99.104"
+    manager1.vm.hostname = "docker-machine-1"
+
+    manager1.vm.provision "shell", path: "manager.sh" do |s|
+      s.args = ["192.168.99.104"]
+    end
+  end
+
+  config.vm.define "docker-machine-2" do |worker1|
+    worker1.vm.network "private_network", ip: "192.168.99.105"
+    worker1.vm.hostname = "docker-machine-2"
+
+    worker1.vm.provision "shell", path: "worker.sh" do |s|
+      s.args = ["192.168.99.105", "192.168.99.104:2377"]
+    end
+  end
+
+  config.vm.define "docker-machine-3" do |worker2|
+    worker2.vm.network "private_network", ip: "192.168.99.106"
+    worker2.vm.hostname = "docker-machine-3"
+
+    worker2.vm.provision "shell", path: "worker.sh" do |s|
+      s.args = ["192.168.99.106", "192.168.99.104:2377"]
+    end
+  end
+end
+

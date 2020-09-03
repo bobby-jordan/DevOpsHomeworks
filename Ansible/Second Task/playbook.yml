@@ -1,0 +1,24 @@
+---
+- hosts: webservers
+  become: true
+  vars:
+      ansible_python_interpreter: auto
+  tasks:
+    - name: Install Apache HTTP Server
+      dnf: name=httpd state=present
+    
+    - name: Start Apache HTTP Server and Enable it
+      service: name=httpd state=started enabled=true
+
+    - name: Allow HTTP service in the firewall
+      firewalld: service=http state=enabled permanent=yes immediate=yes
+
+- hosts: databases
+  become: true
+
+  tasks:
+    - name: Install MariaDB Server
+      yum: name=mariadb,mariadb-server update_cache=yes state=present
+
+    - name: Start and enable MariaDB
+      service: name=mariadb state=started enabled=true
